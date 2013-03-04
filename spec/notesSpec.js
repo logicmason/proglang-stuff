@@ -1,6 +1,7 @@
 describe("Compile Notes", function() {
-  var melody1_mus, melody2_mus, melody3_mus, melody1_note, melody2_notes;
-  
+  var melody1_mus, melody2_mus, melody3_mus, melody1_note, melody2_notes,
+  parallel_mus, parallel_note;
+
   beforeEach(function() {
     melody1_mus = { tag: 'note', pitch: 'a4', dur: 125 };
     melody1_note = [ { tag: 'note', pitch: 'a4', start: 0, dur: 125 } ];
@@ -31,6 +32,23 @@ describe("Compile Notes", function() {
       { tag: 'note', pitch: 'b4', start: 250, dur: 250 },
       { tag: 'note', pitch: 'c4', start: 500, dur: 500 },
       { tag: 'note', pitch: 'd4', start: 1000, dur: 500 } ];
+
+    parallel_mus = 
+    { tag: 'seq',
+      left: 
+       { tag: 'par',
+         left: { tag: 'note', pitch: 'c3', dur: 250 },
+         right: { tag: 'note', pitch: 'g4', dur: 500 } },
+      right:
+       { tag: 'par',
+         left: { tag: 'note', pitch: 'd3', dur: 500 },
+         right: { tag: 'note', pitch: 'f4', dur: 250 } } };
+    
+    parallel_notes = [
+      { tag: 'note', pitch: 'c3', start: 0, dur: 250 },
+      { tag: 'note', pitch: 'g4', start: 0, dur: 500 },
+      { tag: 'note', pitch: 'd3', start: 500, dur: 500 },
+      { tag: 'note', pitch: 'f4', start: 500, dur: 250 } ];
   });
 
   describe("reverse sytax tree", function() {
@@ -51,5 +69,9 @@ describe("Compile Notes", function() {
 
   it("A complex musical expression should compile to notes", function() {
     expect(compile(melody2_mus)).toEqual(melody2_notes);
+  });
+
+  it("A sequence with parallel notes and sequences whould compile correctly", function() {
+    expect(compile(parallel_mus)).toEqual(parallel_notes);
   });
 });

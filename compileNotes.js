@@ -24,10 +24,12 @@ var compile = function (musexpr, start) {
                    start: start,
                    dur: musexpr.dur
                   });
-    } else {
+    } else if (musexpr.tag === 'seq') {
         compile(musexpr.left, start).forEach(function(x) {expr.push(x);});
         start = expr[expr.length-1].start + expr[expr.length-1].dur;
         compile(musexpr.right, start).forEach(function(x) {expr.push(x);});
-    }  
+    } else if (musexpr.tag === 'par') {
+        compile(musexpr.left, start).forEach(function(x) {expr.push(x);});
+        compile(musexpr.right, start).forEach(function(x) {expr.push(x);});    }
     return expr;
 };
