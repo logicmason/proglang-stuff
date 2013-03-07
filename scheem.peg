@@ -1,0 +1,39 @@
+start =
+    space* expr:quotExpr space*
+    {return expr;}
+
+quotExpr =
+    "'" expr:expression
+    { return "(quote " + expr + ")"; }
+    /expression
+
+expression =
+    quotAtom
+    /"(" space* first:quotExpr rest:spacedExpr* space*")"
+    { return [first].concat(rest) ;}
+
+validchar
+    = [0-9a-zA-Z_?!+\-=@#$%^&*/.]
+
+quotAtom =
+    "'" atom:atom
+    {return "(quote " + atom + ")" ; }
+    /atom
+
+atom =
+    chars:validchar+
+        { return chars.join(""); }
+
+space =
+    " "
+    /"\n"
+    /"\t"
+    /comment
+
+comment =
+    ";;" [^\n]*
+    { return; }
+
+spacedExpr =
+    space+ expr:quotExpr
+        { return expr; }
