@@ -1,25 +1,43 @@
 start =
   grammatical*
 
+expression =
+  grammatical
+  /atom
+  /"(" space* first:expression rest:spacedExpr* ")"
+  { return [first].concat(rest) ;}
+
 grammatical =
   check
   /until
+  /set
   /spacedCommand
 
 check =
-  "check" space* "(" spacedExpr ")" space* "yes:"y:spacedCommand "no:"n:spacedCommand space*
-  { return ["check", y, n]; }
+  "check" space* c:spacedExpr space* "yes:"y:grammatical "no:"n:grammatical space*
+  { return ["check", c, y, n]; }
 
 until =
-   "until" spacedExpr spacedCommand
+  "until" spacedExpr spacedExpr
+
+set =
+  "set" space+ a:atom ":" e:spacedExpr
+  { return ["set", a, e]; }
 
 spacedExpr =
-  space* e:expr space*
+  space* e:expression space*
   { return e; }
 
-expr =
+bool =
   "true"
   /"false"
+
+validchar
+    = [0-9a-zA-Z_?!+\-=@#$%^&*/.]
+
+atom =
+    chars:validchar+
+        { return chars.join(""); }
 
 spacedCommand =
   space* c:command space*
