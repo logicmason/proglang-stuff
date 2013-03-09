@@ -11,45 +11,37 @@ expression =
 grammatical =
   check
   /until
-  /and
-  /or
+  /both
+  /either
   /set
   /spacedCommand
-  /gt
-  /lt
-  /eq
+  /comparison
 
 check =
-  "check" space* c:spacedExpr space* "yes:"y:grammatical "no:"n:grammatical space*
+  "check" space* c:spacedExpr space* "yes:"space* y:grammatical "no:"space* n:grammatical space*
   { return ["check", c, y, n]; }
 
 until =
   "until" spacedExpr spacedExpr
 
-and =
-  "both" a:spacedExpr "and" b:spacedExpr
+both =
+  "both:" a:spacedExpr "and:" b:spacedExpr
   { return ["both", a, b]; }
 
-or =
-  "either" a:spacedExpr "or" b:spacedExpr
+either =
+  "either:" a:spacedExpr "or:" b:spacedExpr
   { return ["either", a, b]; }
 
 set =
   "set" space+ a:atom ":" e:spacedExpr
   { return ["set", a, e]; }
 
-eq =
-  mx:mathExp space* "=" space* eq:eq
+comparison =
+  mx:mathExp space* "=" space* eq:mathExp
   { return ["=", mx, eq]; }
-  /mathExp
-
-lt =
-  mx:mathExp space* "<" space* lt:lt
+  /mx:mathExp space* "<" space* lt:mathExp
   { return ["<", mx, lt]; }
-  /mathExp
-
-gt =
-  mx:mathExp space* ">" space* gt:gt
+  /mx:mathExp space* ">" space* gt:mathExp
   { return [">", mx, gt]; }
   /mathExp
 
@@ -62,7 +54,7 @@ bool =
   /"false"
 
 validchar
-    = [0-9a-zA-Z_?!\-@#$%^&*/.]
+    = [0-9a-zA-Z_?!\@#$%^&.]
 
 atom =
     chars:validchar+
