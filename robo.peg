@@ -1,0 +1,27 @@
+start =
+  grammatical*
+
+grammatical =
+  if
+  /spacedCommand
+
+if =
+  "if" spacedExpr spacedCommand
+
+spacedExpr =
+  space* e:expr space*
+  { return e; }
+
+expr =
+  "true"
+  /"false"
+
+spacedCommand =
+  space* c:command space*
+  { return c; }
+
+space =
+  " " / "\n" / "\t"
+
+command =
+  "move" / "left" / "right" / "fire" / "idle"
