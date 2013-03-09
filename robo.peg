@@ -3,6 +3,7 @@ start =
 
 expression =
   grammatical
+  /mathExp
   /atom
   /"(" space* first:expression rest:spacedExpr* ")"
   { return [first].concat(rest) ;}
@@ -10,8 +11,13 @@ expression =
 grammatical =
   check
   /until
+  /and
+  /or
   /set
   /spacedCommand
+  /gt
+  /lt
+  /eq
 
 check =
   "check" space* c:spacedExpr space* "yes:"y:grammatical "no:"n:grammatical space*
@@ -20,9 +26,32 @@ check =
 until =
   "until" spacedExpr spacedExpr
 
+and =
+  "both" a:spacedExpr "and" b:spacedExpr
+  { return ["both", a, b]; }
+
+or =
+  "either" a:spacedExpr "or" b:spacedExpr
+  { return ["either", a, b]; }
+
 set =
   "set" space+ a:atom ":" e:spacedExpr
   { return ["set", a, e]; }
+
+eq =
+  mx:mathExp space* "=" space* eq:eq
+  { return ["=", mx, eq]; }
+  /mathExp
+
+lt =
+  mx:mathExp space* "<" space* lt:lt
+  { return ["<", mx, lt]; }
+  /mathExp
+
+gt =
+  mx:mathExp space* ">" space* gt:gt
+  { return [">", mx, gt]; }
+  /mathExp
 
 spacedExpr =
   space* e:expression space*
@@ -33,7 +62,7 @@ bool =
   /"false"
 
 validchar
-    = [0-9a-zA-Z_?!+\-=@#$%^&*/.]
+    = [0-9a-zA-Z_?!\-@#$%^&*/.]
 
 atom =
     chars:validchar+
@@ -48,3 +77,30 @@ space =
 
 command =
   "move" / "left" / "right" / "fire" / "idle"
+
+mathExp =
+  additive
+
+additive =
+  left:multiplicative space* "+" space* right:additive
+  { return ["+", left, right]; }
+  /left:multiplicative space* "-" space* right:additive
+  { return ["-", left, right]; }
+  / multiplicative
+
+multiplicative =
+  left:primary space* "*" space* right:multiplicative
+  { return ["*", left, right]; }
+  /left:primary space* "/" space* right:multiplicative
+  { return ["/", left, right]; }
+  / primary
+
+primary
+  = integer
+  / "(" space* p:mathExp space* ")"
+  { return p; }
+  /atom
+
+integer =
+  digits:[0-9]+
+  { return parseInt(digits.join(""), 10); }
