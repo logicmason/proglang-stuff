@@ -2,11 +2,16 @@ start =
   grammatical*
 
 grammatical =
-  if
+  check
+  /until
   /spacedCommand
 
-if =
-  "if" spacedExpr spacedCommand
+check =
+  "check" space* "(" spacedExpr ")" space* "yes:"y:spacedCommand "no:"n:spacedCommand space*
+  { return ["check", y, n]; }
+
+until =
+   "until" spacedExpr spacedCommand
 
 spacedExpr =
   space* e:expr space*
