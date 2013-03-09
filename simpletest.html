@@ -1,0 +1,248 @@
+<html>
+<head>
+ <meta charset="utf-8">
+ <title>Mocha Tests</title>
+ <link rel="stylesheet"
+  href="http://nathansuniversity.com/css/mocha.css" />
+ <script src=
+  "http://nathansuniversity.com/js/jquery-1.7.1.min.js">
+ </script>
+ <script src=
+  "http://nathansuniversity.com/js/chai.js">
+ </script>
+ <script src="http://nathansuniversity.com/js/mocha.js">
+ </script>
+ <script>mocha.setup('tdd')</script>
+ <script>
+var assert = chai.assert;
+
+// A half-baked implementation of evalScheem
+var evalScheem = function (expr, env) {
+  // Numbers evaluate to themselves
+  if (typeof expr === 'number') {
+    return expr;
+  }
+  if (typeof expr === 'string') {
+    return env[expr];
+  }
+  // Look at head of list for operation
+  switch (expr[0]) {
+    case 'begin':
+      var result;
+      for (var i=1; i<expr.length; i++) {
+        result = evalScheem(expr[i], env);
+      }
+      return result;
+
+    case 'define':
+      if (env[expr[1]] === undefined) env[expr[1]] = evalScheem(expr[2], env);
+      return 0;
+
+    case 'set!':
+      if (env[expr[1]] !== undefined) env[expr[1]] = evalScheem(expr[2], env);
+      return 0;
+
+    case 'if':
+      if (evalScheem(expr[1]) === '#t') {
+        return evalScheem(expr[2]);
+      } else {
+        return evalScheem(expr[3]);
+      }
+
+    case '=':
+      var eq =
+        (evalScheem(expr[1], env) ===
+         evalScheem(expr[2], env));
+      if (eq) return '#t';
+      return '#f';
+
+    case '<':
+      var lt =
+        (evalScheem(expr[1], env) <
+         evalScheem(expr[2], env));
+      if (lt) return '#t';
+      return '#f';
+
+    case 'cons':
+      return [evalScheem(expr[1])].concat(evalScheem(expr[2]));
+
+    case 'car':
+      return evalScheem(expr[1])[0];
+
+    case 'cdr':
+      return evalScheem(expr[1]).slice(1);
+
+    case '*':
+      return evalScheem(expr[1], env) *
+          evalScheem(expr[2], env);
+
+    case '/':
+      return evalScheem(expr[1], env) /
+          evalScheem(expr[2], env);
+
+    case '+':
+      return evalScheem(expr[1], env) +
+          evalScheem(expr[2], env);
+
+    case '-':
+      return evalScheem(expr[1], env) -
+          evalScheem(expr[2], env);
+
+    case 'quote':
+      return expr[1];
+  }
+};
+
+// Some unit tests
+suite('define', function() {
+  test('define a new variable', function(){
+    var env = {};
+    var somevar = 5;
+    assert.deepEqual(
+      evalScheem(['define', 'x', somevar], env),
+      0
+    );
+    assert.deepEqual(
+      evalScheem('x', env), somevar
+    );
+  });
+  test('cannot define an already defined variable', function(){
+    var env = {x: false};
+    evalScheem(['define', 'x', 13], env);
+    assert.deepEqual(
+      evalScheem('x', env), false
+    )
+  });
+});
+
+suite('set!', function() {
+  test('cannot set undefined variable', function(){
+    var env = {};
+    evalScheem(['set!', 'y', ['quote', 'Robert']], env);
+    assert.deepEqual(
+      evalScheem('y', env), undefined
+    );  });
+  test('set an existing variable', function(){
+    var env = {};
+    evalScheem(['define', 'y', ['quote', 'bob']], env);
+    evalScheem(['set!', 'y', ['quote', 'Robert']], env);
+    assert.deepEqual(
+      evalScheem('y', env), 'Robert'
+    );
+  })
+});
+
+suite('quote', function() {
+  test('a number', function() {
+    assert.deepEqual(
+      evalScheem(['quote', 3], {}),
+      3
+    );
+  });
+  test('an atom', function() {
+    assert.deepEqual(
+      evalScheem(['quote', 'dog'], {}),
+      'dog'
+    );
+  });
+  test('a list', function() {
+    assert.deepEqual(
+      evalScheem(['quote', [1, 2, 3]], {}),
+      [1, 2, 3]
+    );
+  });
+});
+
+suite('add', function() {
+  test('two numbers', function() {
+    assert.deepEqual(
+      evalScheem(['+', 3, 5], {}),
+      8
+    );
+  });
+  test('a number and an expression', function() {
+    assert.deepEqual(
+      evalScheem(['+', 3, ['+', 2, 2]], {}),
+      7
+    );
+  });
+  test('two and two make four', function() {
+   assert.deepEqual(
+    evalScheem(['+', 2, 2]), 4
+   );
+  });
+  test('a dog and a cat', function() {
+    assert.deepEqual(
+      evalScheem(['+', 'dog', 'cat'], {}),
+      NaN
+    );
+  });
+});
+
+suite('subtract', function() {
+  test('two numbers', function() {
+    assert.deepEqual(
+      evalScheem(['-', 9, 5], {}),
+      4
+    );
+  });
+  test('a number and an expression', function() {
+    assert.deepEqual(
+      evalScheem(['-', 3, ['+', 2, 2]], {}),
+      -1
+    );
+  });
+  test('a number minus 0', function() {
+   assert.deepEqual(
+    evalScheem(['-', 89, 0]), 89
+   );
+  });
+});
+
+suite('multiply', function() {
+  test('a number mulitplied by another number', function() {
+    assert.deepEqual(
+     evalScheem(['*', 4, 7]), 28
+   );
+  });
+  test('a number multiplied by 0', function() {
+    assert.deepEqual(
+      evalScheem(['*', 0, 50000]), 0
+    );
+  });
+  test('multiplication and addition in one expression', function() {
+    assert.deepEqual(
+      evalScheem(['+', 4, ['*', 2, 3]]), 10
+    );
+  })
+})
+
+suite('divide', function() {
+  test('a number divided by another number', function() {
+    assert.deepEqual(
+     evalScheem(['/', 35, 7]), 5
+   );
+  });
+  test('zero divided by a number', function() {
+    assert.deepEqual(
+      evalScheem(['/', 0, 50000]), 0
+    );
+  });
+  test('division and subtraction in one expression', function() {
+    assert.deepEqual(
+      evalScheem(['-', 4, ['/', 20, 5]]), 0
+    );
+  })
+})
+
+ </script>
+ <script>
+  $(function(){
+   mocha.run();
+  });
+ </script>
+</head>
+<body>
+ <div id="mocha"></div>
+</body>
+</html>

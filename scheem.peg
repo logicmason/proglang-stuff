@@ -31,7 +31,7 @@ space =
     /comment
 
 comment =
-    ";;" [^\n]*
+    ";;" [^\n\r]*
     { return; }
 
 spacedExpr =
